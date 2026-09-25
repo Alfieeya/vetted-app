@@ -99,8 +99,8 @@
   .btn-primary:disabled{opacity:.5; cursor:not-allowed; filter:none;}
   .btn-ghost{background:var(--navy-800); color:var(--text-300); border:1px solid var(--navy-600);}
   .btn-ghost:hover{color:var(--text-100);}
-  .actions{display:flex; align-items:center; gap:12px; margin-top:18px;}
-  .status-line{font-size:13px; color:var(--text-500);}
+  .actions{display:flex; align-items:center; gap:12px; margin-top:18px; flex-wrap:wrap;}
+  .status-line{font-size:13px; color:var(--text-500); flex-basis:100%; word-break:break-word;}
 
   .results{margin-top:26px; display:flex; flex-direction:column; gap:14px;}
   .card{background:var(--navy-900); border:1px solid var(--navy-700); border-radius:var(--border-radius); overflow:hidden;}
@@ -357,9 +357,9 @@ async function callGemini(prompt){
     })
   });
   if(!res.ok){
-    if(res.status===400 || res.status===403) throw {code:'bad_key'};
-    if(res.status===429) throw {code:'rate_limited'};
-    throw {code:'http_error', status: res.status};
+    let msg = '';
+    try{ const errBody = await res.json(); msg = errBody && errBody.error && errBody.error.message || ''; }catch(e){}
+    throw {code:'http_error', status: res.status, message: msg};
   }
   const data = await res.json();
   const text = data.candidates && data.candidates[0] && data.candidates[0].content &&
@@ -426,10 +426,11 @@ Score strictly based on the JD and extra requirements. matchingSkills should lis
 function geminiErrorMessage(e){
   const code = e && e.code;
   if(code==='no_key') return 'Add your Gemini API key in the sidebar first.';
-  if(code==='bad_key') return 'That API key was rejected — check it in the sidebar.';
-  if(code==='rate_limited') return 'Gemini is rate-limiting this key — wait a moment and try again.';
-  if(code==='http_error') return 'The request failed (HTTP ' + (e.status||'?') + '). The model name may be outdated — check aistudio.google.com for current model names.';
-  return 'The request failed. Please try again.';
+  if(code==='http_error') return 'Gemini error (HTTP ' + (e.status||'?') + '): ' + (e.message || 'no details returned.');
+  if(code==='empty') return 'Gemini returned an empty response — try again.';
+  if(e instanceof SyntaxError) return 'Gemini returned text that wasn\'t valid JSON — try again with fewer/smaller resumes.';
+  if(e instanceof TypeError) return 'Network/CORS error reaching Gemini — check your internet connection, or the API key restrictions in AI Studio.';
+  return 'The request failed: ' + (e && e.message ? e.message : 'unknown error') + '.';
 }
 
 function scoreColor(s){ return s; }
