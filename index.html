@@ -347,7 +347,7 @@ document.getElementById('save-key').addEventListener('click', ()=>{
 async function callGemini(prompt){
   const key = loadKey();
   if(!key) throw {code:'no_key'};
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(key);
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=' + encodeURIComponent(key);
   const res = await fetch(url, {
     method:'POST',
     headers:{'Content-Type':'application/json'},
@@ -428,6 +428,7 @@ function geminiErrorMessage(e){
   if(code==='no_key') return 'Add your Gemini API key in the sidebar first.';
   if(code==='bad_key') return 'That API key was rejected — check it in the sidebar.';
   if(code==='rate_limited') return 'Gemini is rate-limiting this key — wait a moment and try again.';
+  if(code==='http_error') return 'The request failed (HTTP ' + (e.status||'?') + '). The model name may be outdated — check aistudio.google.com for current model names.';
   return 'The request failed. Please try again.';
 }
 
