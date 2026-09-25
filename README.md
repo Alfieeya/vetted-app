@@ -25,7 +25,7 @@ Each result shows the candidate's name and match score, with three expandable pa
 
 ## Setup
 
-No installation, build step, or backend required — it's one HTML page.
+No installation, build step, or backend required - it's one HTML page.
 
 1. Open the live link above (or open `index.html` locally in a browser)
 2. Get a free Gemini API key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (sign in with Google, click *Create API key*)
@@ -48,4 +48,4 @@ The key is stored only in your own browser's local storage - it is never written
 ## Notes
 
 - Gemini occasionally renames or retires model versions. If ranking/auditing stops working, check [ai.google.dev/gemini-api/docs/models](https://ai.google.dev/gemini-api/docs/models) for the current model name and update the `model` value in the fetch URL inside the script.
-- Free-tier API keys have daily/per-minute rate limits — if you hit them, wait a bit and try again.
+- Free-tier API keys have daily/per-minute rate limits - if you hit them, wait a bit and try again.
