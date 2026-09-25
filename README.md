@@ -15,13 +15,13 @@ A candidate screening tool for ranking resumes against a job description, and au
 - Click **Rank candidates** to get every candidate scored against the role
 
 Each result shows the candidate's name and match score, with three expandable panels:
-- **Matching skills** — what they demonstrably bring, with relevance
-- **Required skills** — gaps against the role
-- **Overall analysis** — a short written assessment of fit
+- **Matching skills** - what they demonstrably bring, with relevance
+- **Required skills** - gaps against the role
+- **Overall analysis** - a short written assessment of fit
 
 ### Updation Required
 - Drop resumes to audit
-- Click **Check resumes** to flag which ones look stale or incomplete — missing/vague dates, no current role, missing sections, unexplained gaps — with a plain-language explanation for each
+- Click **Check resumes** to flag which ones look stale or incomplete - missing/vague dates, no current role, missing sections, unexplained gaps — with a plain-language explanation for each
 
 ## Setup
 
