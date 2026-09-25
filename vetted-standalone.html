@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vetted — Candidate Screening</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+  :root{
+    --navy-950:#060B16; --navy-900:#0B1424; --navy-850:#0F1B30; --navy-800:#121E33;
+    --navy-700:#1C2C47; --navy-600:#2A3F63;
+    --blue-500:#4C7EE8; --blue-400:#6E97EE; --gold-400:#D4AF6A;
+    --text-100:#EAF0FA; --text-300:#B7C4DC; --text-500:#8194B3;
+    --green-400:#57D08C; --amber-400:#F0B75C; --red-400:#F0798A;
+    --border-radius:10px;
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%;}
+  body{
+    margin:0; min-height:100%; background:var(--navy-950); color:var(--text-100);
+    font-family:'Inter',system-ui,-apple-system,sans-serif; font-size:15px; line-height:1.5;
+  }
+  h1,h2,h3,.serif{font-family:'Fraunces',Georgia,'Times New Roman',serif;}
+  ::selection{background:var(--blue-500); color:#fff;}
+  a{color:var(--blue-400);}
+
+  .shell{display:flex; min-height:100vh;}
+  .sidebar{
+    width:236px; flex:none; background:var(--navy-900); border-right:1px solid var(--navy-700);
+    padding:28px 20px; display:flex; flex-direction:column; gap:28px;
+  }
+  .brand{display:flex; flex-direction:column; gap:4px;}
+  .brand .mark{font-size:24px; font-weight:600; letter-spacing:.2px;}
+  .brand .mark span{color:var(--gold-400);}
+  .brand .sub{font-size:12.5px; color:var(--text-500);}
+  nav{display:flex; flex-direction:column; gap:4px;}
+  .navbtn{
+    text-align:left; background:none; border:none; color:var(--text-300); font:inherit;
+    font-size:14.5px; padding:11px 12px; border-radius:8px; cursor:pointer;
+    display:flex; flex-direction:column; gap:2px; transition:background .15s, color .15s;
+  }
+  .navbtn .t{font-weight:600; color:inherit;}
+  .navbtn .d{font-size:12px; color:var(--text-500);}
+  .navbtn:hover{background:var(--navy-800); color:var(--text-100);}
+  .navbtn.active{background:var(--navy-800); color:var(--text-100); box-shadow:inset 2px 0 0 var(--blue-500);}
+  .sidebar-foot{margin-top:auto; font-size:12px; color:var(--text-500); border-top:1px solid var(--navy-700); padding-top:14px;}
+  .apikey-box{border-top:1px solid var(--navy-700); padding-top:16px;}
+  .apikey-box input{
+    width:100%; background:var(--navy-850); border:1px solid var(--navy-600); color:var(--text-100);
+    border-radius:7px; padding:9px 10px; font:inherit; font-size:13px;
+  }
+  .apikey-box .hint a{color:var(--blue-400);}
+
+  .main{flex:1; min-width:0; padding:36px 44px 64px; max-width:980px;}
+  .view{display:none;} .view.active{display:block;}
+  .page-head{margin-bottom:28px;}
+  .page-head h1{font-size:27px; font-weight:500; margin:0 0 6px;}
+  .page-head p{margin:0; color:var(--text-400,var(--text-500)); max-width:62ch; font-size:14.5px; color:var(--text-500);}
+
+  .panel{background:var(--navy-900); border:1px solid var(--navy-700); border-radius:var(--border-radius); padding:22px 24px; margin-bottom:20px;}
+  label.field-label{display:block; font-size:13px; font-weight:600; color:var(--text-300); margin-bottom:8px;}
+  .hint{font-size:12px; color:var(--text-500); margin-top:6px;}
+  textarea{
+    width:100%; background:var(--navy-850); border:1px solid var(--navy-600); color:var(--text-100);
+    border-radius:8px; padding:12px 13px; font:inherit; font-size:14px; resize:vertical; min-height:110px;
+  }
+  textarea:focus, .droparea:focus-within, input:focus{outline:2px solid var(--blue-500); outline-offset:1px;}
+  .row-2{display:grid; grid-template-columns:1.3fr 1fr; gap:18px;}
+  @media (max-width:760px){ .row-2{grid-template-columns:1fr;} .sidebar{width:76px; padding:20px 10px;} .brand .sub,.navbtn .d{display:none;} .navbtn{text-align:center;} .main{padding:26px 18px 60px;} }
+
+  .droparea{
+    border:1.5px dashed var(--navy-600); border-radius:8px; background:var(--navy-850);
+    padding:22px; text-align:center; cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .droparea.drag{border-color:var(--blue-500); background:#0E1C33;}
+  .droparea .big{font-size:14px; color:var(--text-300); margin-bottom:3px;}
+  .droparea .small{font-size:12px; color:var(--text-500);}
+  .filelist{list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:6px;}
+  .filelist li{
+    display:flex; align-items:center; justify-content:space-between; background:var(--navy-850);
+    border:1px solid var(--navy-700); border-radius:7px; padding:8px 12px; font-size:13px; color:var(--text-300);
+  }
+  .filelist button{background:none; border:none; color:var(--text-500); cursor:pointer; font-size:13px;}
+  .filelist button:hover{color:var(--red-400);}
+
+  .btn{
+    appearance:none; border:none; border-radius:8px; padding:11px 20px; font:inherit; font-weight:600;
+    font-size:14px; cursor:pointer; transition:filter .15s, transform .05s;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(180deg,var(--blue-400),var(--blue-500)); color:#fff;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-primary:disabled{opacity:.5; cursor:not-allowed; filter:none;}
+  .btn-ghost{background:var(--navy-800); color:var(--text-300); border:1px solid var(--navy-600);}
+  .btn-ghost:hover{color:var(--text-100);}
+  .actions{display:flex; align-items:center; gap:12px; margin-top:18px;}
+  .status-line{font-size:13px; color:var(--text-500);}
+
+  .results{margin-top:26px; display:flex; flex-direction:column; gap:14px;}
+  .card{background:var(--navy-900); border:1px solid var(--navy-700); border-radius:var(--border-radius); overflow:hidden;}
+  .card-head{display:flex; align-items:center; gap:14px; padding:18px 22px;}
+  .rank-badge{
+    width:30px; height:30px; border-radius:50%; background:var(--navy-800); border:1px solid var(--navy-600);
+    display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:600; color:var(--text-400,var(--text-300)); flex:none;
+  }
+  .card-head .name{font-family:'Fraunces',serif; font-size:18px; font-weight:500; flex:1; min-width:0;}
+  .score-wrap{display:flex; align-items:center; gap:9px; flex:none;}
+  .score-bar{width:74px; height:6px; border-radius:4px; background:var(--navy-700); overflow:hidden;}
+  .score-bar > i{display:block; height:100%; background:linear-gradient(90deg,var(--blue-500),var(--gold-400));}
+  .score-num{font-size:13.5px; font-weight:700; width:34px; text-align:right;}
+  .status-pill{font-size:11.5px; font-weight:700; letter-spacing:.3px; padding:4px 10px; border-radius:20px; flex:none;}
+  .pill-good{background:rgba(87,208,140,.14); color:var(--green-400);}
+  .pill-warn{background:rgba(240,183,92,.14); color:var(--amber-400);}
+
+  .subrow{display:flex; flex-wrap:wrap; gap:8px; padding:0 22px 18px;}
+  .toggle{
+    background:var(--navy-850); border:1px solid var(--navy-700); color:var(--text-300);
+    font-size:12.5px; font-weight:600; padding:7px 13px; border-radius:7px; cursor:pointer;
+  }
+  .toggle:hover{border-color:var(--blue-500); color:var(--text-100);}
+  .toggle.open{background:var(--navy-800); color:var(--text-100); border-color:var(--blue-500);}
+  .panelbody{display:none; padding:2px 22px 20px; border-top:1px solid var(--navy-700);}
+  .panelbody.open{display:block; padding-top:16px;}
+  .skill-chip{display:inline-flex; align-items:center; gap:6px; background:var(--navy-850); border:1px solid var(--navy-700); border-radius:20px; padding:5px 11px; font-size:12.5px; margin:0 6px 8px 0;}
+  .rel-dot{width:7px; height:7px; border-radius:50%;}
+  .rel-High{background:var(--green-400);} .rel-Medium{background:var(--gold-400);} .rel-Low{background:var(--text-500);}
+  .gap-item{display:flex; gap:8px; align-items:flex-start; font-size:13.5px; color:var(--text-300); margin-bottom:8px;}
+  .gap-item::before{content:"—"; color:var(--red-400);}
+  .analysis-text{font-size:13.8px; color:var(--text-300); line-height:1.65;}
+  .issue-item{display:flex; gap:8px; align-items:flex-start; font-size:13.5px; color:var(--text-300); margin-bottom:8px;}
+  .issue-item::before{content:"⚠"; color:var(--amber-400); flex:none;}
+
+  .empty{color:var(--text-500); font-size:13.5px; padding:6px 2px;}
+  .spin{display:inline-block; width:13px; height:13px; border:2px solid var(--navy-600); border-top-color:var(--blue-500); border-radius:50%; animation:sp .7s linear infinite; margin-right:8px; vertical-align:-2px;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">Vetted<span>.</span></div>
+      <div class="sub">Candidate screening desk</div>
+    </div>
+    <nav>
+      <button class="navbtn active" data-view="rank">
+        <span class="t">Rank Resumes</span>
+        <span class="d">Score against a role</span>
+      </button>
+      <button class="navbtn" data-view="update">
+        <span class="t">Updation Required</span>
+        <span class="d">Check resume completeness</span>
+      </button>
+    </nav>
+    <div class="apikey-box">
+      <label class="field-label" for="gemini-key" style="font-size:11px;">Gemini API key</label>
+      <input type="password" id="gemini-key" placeholder="Paste key" autocomplete="off">
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button class="btn btn-ghost" id="save-key" style="padding:7px 12px; font-size:12.5px;">Save</button>
+        <span class="hint" id="key-status" style="margin-top:9px;"></span>
+      </div>
+      <div class="hint">Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. Stored only in this browser.</div>
+    </div>
+    <div class="sidebar-foot">Resumes are read in your browser; only the extracted text is sent to Gemini to score them.</div>
+  </aside>
+
+  <main class="main">
+
+    <!-- RANK VIEW -->
+    <section class="view active" id="view-rank">
+      <div class="page-head">
+        <h1>Rank Resumes</h1>
+        <p>Paste the job description, add any extra requirements, upload resumes, and rank candidates against the role.</p>
+      </div>
+
+      <div class="panel">
+        <div class="row-2">
+          <div>
+            <label class="field-label" for="jd">JD</label>
+            <textarea id="jd" placeholder="Paste or drop a file"></textarea>
+          </div>
+          <div>
+            <label class="field-label" for="addon">Add-on</label>
+            <textarea id="addon"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <label class="field-label">Resumes</label>
+        <div class="droparea" id="drop-rank" tabindex="0">
+          <div class="big">Drop resumes here, or click to browse</div>
+          <div class="small">PDF, DOCX or TXT — any number of files</div>
+          <input type="file" id="file-rank" multiple accept=".pdf,.docx,.txt" style="display:none">
+        </div>
+        <ul class="filelist" id="list-rank"></ul>
+        <div class="actions">
+          <button class="btn btn-primary" id="btn-rank">Rank candidates</button>
+          <button class="btn btn-ghost" id="btn-clear-rank">Clear</button>
+          <span class="status-line" id="status-rank"></span>
+        </div>
+      </div>
+
+      <div class="results" id="results-rank"></div>
+    </section>
+
+    <!-- UPDATE VIEW -->
+    <section class="view" id="view-update">
+      <div class="page-head">
+        <h1>Updation Required</h1>
+        <p>Drop resumes to check whether they're current — recent dates, complete work history, no missing essentials.</p>
+      </div>
+
+      <div class="panel">
+        <label class="field-label">Resumes to audit</label>
+        <div class="droparea" id="drop-update" tabindex="0">
+          <div class="big">Drop resumes here, or click to browse</div>
+          <div class="small">PDF, DOCX or TXT — any number of files</div>
+          <input type="file" id="file-update" multiple accept=".pdf,.docx,.txt" style="display:none">
+        </div>
+        <ul class="filelist" id="list-update"></ul>
+        <div class="actions">
+          <button class="btn btn-primary" id="btn-update">Check resumes</button>
+          <button class="btn btn-ghost" id="btn-clear-update">Clear</button>
+          <span class="status-line" id="status-update"></span>
+        </div>
+      </div>
+
+      <div class="results" id="results-update"></div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+// ---------- nav ----------
+document.querySelectorAll('.navbtn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('view-'+b.dataset.view).classList.add('active');
+  });
+});
+
+// ---------- file state ----------
+const store = { rank: [], update: [] };
+
+function wireDropzone(key){
+  const drop = document.getElementById('drop-'+key);
+  const input = document.getElementById('file-'+key);
+  drop.addEventListener('click', ()=>input.click());
+  drop.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') input.click(); });
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.add('drag');}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.remove('drag');}));
+  drop.addEventListener('drop', e=> addFiles(key, e.dataTransfer.files));
+  input.addEventListener('change', e=> addFiles(key, e.target.files));
+}
+function addFiles(key, fileList){
+  Array.from(fileList).forEach(f=>{
+    if(!/\.(pdf|docx|txt)$/i.test(f.name)) return;
+    store[key].push(f);
+  });
+  renderFileList(key);
+}
+function renderFileList(key){
+  const ul = document.getElementById('list-'+key);
+  ul.innerHTML = '';
+  store[key].forEach((f,i)=>{
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${f.name}</span>`;
+    const btn = document.createElement('button');
+    btn.textContent = 'Remove';
+    btn.onclick = ()=>{ store[key].splice(i,1); renderFileList(key); };
+    li.appendChild(btn);
+    ul.appendChild(li);
+  });
+}
+wireDropzone('rank'); wireDropzone('update');
+
+// JD box: allow dropping a file straight in, extracting its text
+const jdBox = document.getElementById('jd');
+['dragenter','dragover'].forEach(ev=>jdBox.addEventListener(ev, e=>{ e.preventDefault(); jdBox.style.outline='2px solid var(--blue-500)'; }));
+['dragleave'].forEach(ev=>jdBox.addEventListener(ev, ()=>{ jdBox.style.outline=''; }));
+jdBox.addEventListener('drop', async e=>{
+  e.preventDefault(); jdBox.style.outline='';
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if(!f || !/\.(pdf|docx|txt)$/i.test(f.name)) return;
+  const prevPlaceholder = jdBox.placeholder;
+  jdBox.placeholder = 'Reading ' + f.name + '…';
+  try{
+    jdBox.value = await extractText(f);
+  }catch(err){
+    jdBox.placeholder = prevPlaceholder;
+  }
+});
+document.getElementById('btn-clear-rank').onclick = ()=>{ store.rank=[]; renderFileList('rank'); document.getElementById('results-rank').innerHTML=''; document.getElementById('status-rank').textContent=''; };
+document.getElementById('btn-clear-update').onclick = ()=>{ store.update=[]; renderFileList('update'); document.getElementById('results-update').innerHTML=''; document.getElementById('status-update').textContent=''; };
+
+// ---------- text extraction ----------
+async function extractText(file){
+  const name = file.name.toLowerCase();
+  if(name.endsWith('.txt')){
+    return await file.text();
+  }
+  if(name.endsWith('.pdf')){
+    const buf = await file.arrayBuffer();
+    const doc = await pdfjsLib.getDocument({data: buf}).promise;
+    let text = '';
+    for(let p=1; p<=doc.numPages; p++){
+      const page = await doc.getPage(p);
+      const content = await page.getTextContent();
+      text += content.items.map(it=>it.str).join(' ') + '\n';
+    }
+    return text;
+  }
+  if(name.endsWith('.docx')){
+    const buf = await file.arrayBuffer();
+    const res = await mammoth.extractRawText({arrayBuffer: buf});
+    return res.value;
+  }
+  return '';
+}
+
+// ---------- Gemini key + call helper ----------
+const KEY_STORAGE = 'vetted_gemini_key';
+function loadKey(){ try{ return localStorage.getItem(KEY_STORAGE) || ''; }catch(e){ return ''; } }
+function saveKeyToStorage(k){ try{ localStorage.setItem(KEY_STORAGE, k); }catch(e){} }
+
+const keyInput = document.getElementById('gemini-key');
+const keyStatus = document.getElementById('key-status');
+keyInput.value = loadKey();
+document.getElementById('save-key').addEventListener('click', ()=>{
+  saveKeyToStorage(keyInput.value.trim());
+  keyStatus.textContent = 'Saved';
+  setTimeout(()=>{ keyStatus.textContent=''; }, 1800);
+});
+
+async function callGemini(prompt){
+  const key = loadKey();
+  if(!key) throw {code:'no_key'};
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(key);
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      contents:[{parts:[{text: prompt}]}],
+      generationConfig:{responseMimeType:'application/json'}
+    })
+  });
+  if(!res.ok){
+    if(res.status===400 || res.status===403) throw {code:'bad_key'};
+    if(res.status===429) throw {code:'rate_limited'};
+    throw {code:'http_error', status: res.status};
+  }
+  const data = await res.json();
+  const text = data.candidates && data.candidates[0] && data.candidates[0].content &&
+    data.candidates[0].content.parts.map(p=>p.text||'').join('');
+  if(!text) throw {code:'empty'};
+  return JSON.parse(text);
+}
+
+// ---------- rank flow ----------
+document.getElementById('btn-rank').addEventListener('click', async ()=>{
+  const jd = document.getElementById('jd').value.trim();
+  const addon = document.getElementById('addon').value.trim();
+  const statusEl = document.getElementById('status-rank');
+  const resultsEl = document.getElementById('results-rank');
+  const btn = document.getElementById('btn-rank');
+
+  if(!jd){ statusEl.textContent = 'Add a job description first.'; return; }
+  if(store.rank.length===0){ statusEl.textContent = 'Upload at least one resume.'; return; }
+
+  if(!loadKey()){ statusEl.textContent = 'Add your Gemini API key in the sidebar first.'; return; }
+
+  btn.disabled = true;
+  statusEl.innerHTML = '<span class="spin"></span>Reading resumes…';
+  resultsEl.innerHTML = '';
+
+  let candidates = [];
+  try{
+    for(const f of store.rank){
+      const text = await extractText(f);
+      candidates.push({file: f.name, text: text.slice(0, 6000)});
+    }
+  }catch(e){
+    statusEl.textContent = 'Could not read one or more files. Try re-saving as PDF or DOCX.';
+    btn.disabled = false; return;
+  }
+
+  statusEl.innerHTML = '<span class="spin"></span>Scoring candidates against the role…';
+
+  const prompt = `You are a meticulous technical recruiter. Score each candidate resume against the job description and extra requirements below.
+
+JOB DESCRIPTION:
+${jd}
+
+EXTRA REQUIREMENTS (may be empty):
+${addon || '(none)'}
+
+CANDIDATES (each is raw extracted resume text, may contain formatting noise):
+${candidates.map((c,i)=>`--- Candidate ${i+1} (source file: ${c.file}) ---\n${c.text}`).join('\n\n')}
+
+For each candidate, return the person's actual name as found in their resume (never the filename). Respond with ONLY valid JSON, no markdown fences, no commentary, matching exactly this shape:
+{"candidates":[{"name":"string","matchScore":0-100 integer,"matchingSkills":[{"skill":"string","relevance":"High|Medium|Low","note":"short reason, under 15 words"}],"gaps":[{"skill":"string","note":"short reason, under 15 words"}],"analysis":"3-4 sentence overall assessment of fit for this specific role"}]}
+Score strictly based on the JD and extra requirements. matchingSkills should list skills/experience the candidate genuinely demonstrates that match the role. gaps should list required skills/experience missing or weak. Order candidates array by matchScore descending.`;
+
+  try{
+    const data = await callGemini(prompt);
+    renderRankResults(data.candidates || []);
+    statusEl.textContent = `Ranked ${ (data.candidates||[]).length } candidate(s).`;
+  }catch(e){
+    statusEl.textContent = geminiErrorMessage(e);
+  }
+  btn.disabled = false;
+});
+
+function geminiErrorMessage(e){
+  const code = e && e.code;
+  if(code==='no_key') return 'Add your Gemini API key in the sidebar first.';
+  if(code==='bad_key') return 'That API key was rejected — check it in the sidebar.';
+  if(code==='rate_limited') return 'Gemini is rate-limiting this key — wait a moment and try again.';
+  return 'The request failed. Please try again.';
+}
+
+function scoreColor(s){ return s; }
+function renderRankResults(list){
+  const el = document.getElementById('results-rank');
+  el.innerHTML = '';
+  if(!list.length){ el.innerHTML = '<div class="empty">No candidates returned.</div>'; return; }
+  list.forEach((c,i)=>{
+    const card = document.createElement('div'); card.className='card';
+    const uid = 'r'+i;
+    card.innerHTML = `
+      <div class="card-head">
+        <div class="rank-badge">${i+1}</div>
+        <div class="name">${escapeHtml(c.name||'Unnamed candidate')}</div>
+        <div class="score-wrap">
+          <div class="score-bar"><i style="width:${Math.max(0,Math.min(100,c.matchScore||0))}%"></i></div>
+          <div class="score-num">${c.matchScore ?? '–'}</div>
+        </div>
+      </div>
+      <div class="subrow">
+        <button class="toggle" data-t="${uid}-skills">Matching skills</button>
+        <button class="toggle" data-t="${uid}-gaps">Required skills</button>
+        <button class="toggle" data-t="${uid}-analysis">Overall analysis</button>
+      </div>
+      <div class="panelbody" id="${uid}-skills">
+        ${(c.matchingSkills||[]).length ? (c.matchingSkills||[]).map(s=>`<span class="skill-chip"><span class="rel-dot rel-${s.relevance||'Medium'}"></span>${escapeHtml(s.skill)} — ${escapeHtml(s.note||'')}</span>`).join('') : '<div class="empty">No clear matches found.</div>'}
+      </div>
+      <div class="panelbody" id="${uid}-gaps">
+        ${(c.gaps||[]).length ? (c.gaps||[]).map(g=>`<div class="gap-item"><span>${escapeHtml(g.skill)} — ${escapeHtml(g.note||'')}</span></div>`).join('') : '<div class="empty">No significant gaps identified.</div>'}
+      </div>
+      <div class="panelbody" id="${uid}-analysis">
+        <div class="analysis-text">${escapeHtml(c.analysis||'No analysis provided.')}</div>
+      </div>
+    `;
+    el.appendChild(card);
+  });
+  wireToggles(el);
+}
+
+// ---------- update flow ----------
+document.getElementById('btn-update').addEventListener('click', async ()=>{
+  const statusEl = document.getElementById('status-update');
+  const resultsEl = document.getElementById('results-update');
+  const btn = document.getElementById('btn-update');
+
+  if(store.update.length===0){ statusEl.textContent = 'Upload at least one resume.'; return; }
+  if(!loadKey()){ statusEl.textContent = 'Add your Gemini API key in the sidebar first.'; return; }
+
+  btn.disabled = true;
+  statusEl.innerHTML = '<span class="spin"></span>Reading resumes…';
+  resultsEl.innerHTML = '';
+
+  let docs = [];
+  try{
+    for(const f of store.update){
+      const text = await extractText(f);
+      docs.push({file: f.name, text: text.slice(0, 6000)});
+    }
+  }catch(e){
+    statusEl.textContent = 'Could not read one or more files.';
+    btn.disabled=false; return;
+  }
+
+  statusEl.innerHTML = '<span class="spin"></span>Auditing resumes…';
+
+  const today = new Date().toISOString().slice(0,10);
+  const prompt = `You are a meticulous resume auditor. Today's date is ${today}. For each resume below, decide whether it looks CURRENT and COMPLETE, or NEEDS UPDATE.
+
+Check specifically for: missing or vague dates on work experience (no month/year, or ranges that stop years ago with no indication of current role), missing contact details, no most-recent role or unclear current status, missing education details, no skills section, unexplained gaps, and any other clear sign the resume is stale or incomplete.
+
+RESUMES:
+${docs.map((d,i)=>`--- Resume ${i+1} (source file: ${d.file}) ---\n${d.text}`).join('\n\n')}
+
+Respond with ONLY valid JSON, no markdown fences, matching exactly:
+{"results":[{"name":"string (actual candidate name, not filename)","status":"Updated|Needs Update","issues":["short specific issue, under 18 words"],"notes":"1-2 sentence summary of overall completeness"}]}`;
+
+  try{
+    const data = await callGemini(prompt);
+    renderUpdateResults(data.results||[]);
+    statusEl.textContent = `Checked ${(data.results||[]).length} resume(s).`;
+  }catch(e){
+    statusEl.textContent = geminiErrorMessage(e);
+  }
+  btn.disabled=false;
+});
+
+function renderUpdateResults(list){
+  const el = document.getElementById('results-update');
+  el.innerHTML = '';
+  if(!list.length){ el.innerHTML = '<div class="empty">No results returned.</div>'; return; }
+  list.forEach((c,i)=>{
+    const card = document.createElement('div'); card.className='card';
+    const uid = 'u'+i;
+    const good = (c.status||'').toLowerCase().includes('updated') && !(c.status||'').toLowerCase().includes('needs');
+    card.innerHTML = `
+      <div class="card-head">
+        <div class="rank-badge">${i+1}</div>
+        <div class="name">${escapeHtml(c.name||'Unnamed candidate')}</div>
+        <span class="status-pill ${good?'pill-good':'pill-warn'}">${escapeHtml(c.status||'Unknown')}</span>
+      </div>
+      <div class="subrow">
+        <button class="toggle" data-t="${uid}-details">Details</button>
+      </div>
+      <div class="panelbody" id="${uid}-details">
+        <div class="analysis-text" style="margin-bottom:10px;">${escapeHtml(c.notes||'')}</div>
+        ${(c.issues||[]).length ? (c.issues||[]).map(x=>`<div class="issue-item"><span>${escapeHtml(x)}</span></div>`).join('') : '<div class="empty">No issues found.</div>'}
+      </div>
+    `;
+    el.appendChild(card);
+  });
+  wireToggles(el);
+}
+
+function wireToggles(scope){
+  scope.querySelectorAll('.toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const target = document.getElementById(btn.dataset.t);
+      const open = target.classList.toggle('open');
+      btn.classList.toggle('open', open);
+    });
+  });
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+</script>
+</body>
+</html>
